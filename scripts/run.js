@@ -13,6 +13,7 @@ const main = async () => {
 
   let txn = await domainContract.register(userInput, {
     value: hre.ethers.utils.parseEther("0.1"),
+    gasLimit: 50000,
   });
   await txn.wait();
 

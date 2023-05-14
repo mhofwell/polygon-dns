@@ -14,11 +14,11 @@ const main = async () => {
   await txn.wait();
   console.log("Minted domain " + name + ".labs");
 
-  txn = await domainContract.setRecord("labs", "Am I a banana or a ninja??");
+  txn = await domainContract.setRecord(name, "Am I a banana or a ninja??");
   await txn.wait();
   console.log("Set record for " + name + ".labs");
 
-  const address = await domainContract.getAddress("banana");
+  const address = await domainContract.getAddress("scale3");
   console.log("Owner of domain " + name + ":", address);
 
   const balance = await hre.ethers.provider.getBalance(domainContract.address);

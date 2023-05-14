@@ -3,7 +3,7 @@
 const main = async () => {
   const [owner, randomPerson] = await hre.ethers.getSigners();
   const domainContractFactory = await hre.ethers.getContractFactory("Domains");
-  const domainContract = await domainContractFactory.deploy('labs');
+  const domainContract = await domainContractFactory.deploy("labs");
   await domainContract.deployed();
 
   console.log("Contract deployed to: ", domainContract.address);
@@ -13,7 +13,6 @@ const main = async () => {
 
   let txn = await domainContract.register(userInput, {
     value: hre.ethers.utils.parseEther("0.1"),
-    gasLimit: 50000,
   });
   await txn.wait();
 

@@ -27,17 +27,29 @@ contract Domains is ERC721URIStorage {
 
     mapping(string => address) public domains;
     mapping(string => string) public records;
+    mapping(uint => string) public names;
+
+    error Unauthorized();
+    error AlreadyRegistered();
+    error InvalidName(string name);
 
     // We make the contract "payable" by adding this to the constructor
+    address payable public owner;
+
     constructor(
         string memory _tld
-    ) payable ERC721(".labs Polygon Name Service", "LABS") {
+    ) payable ERC721("Ninja Name Service", "NNS") {
+        owner = payable(msg.sender);
         tld = _tld;
         console.log("%s name service deployed", _tld);
     }
 
     function register(string calldata name) public payable {
+        if (domains[name] != address(0)) revert AlreadyRegistered();
+        if (!valid(name)) revert InvalidName(name);
+
         // Check that the name is unregistered (explained in notes)
+
         require(domains[name] == address(0));
 
         uint _price = price(name);
@@ -100,6 +112,7 @@ contract Domains is ERC721URIStorage {
         domains[name] = msg.sender;
         console.log("%s has registered a domain!", msg.sender);
 
+        names[newRecordId] = name;
         _tokenIds.increment();
     }
 
@@ -123,7 +136,7 @@ contract Domains is ERC721URIStorage {
 
     function setRecord(string calldata name, string calldata record) public {
         // Check that the owner is the transaction sender
-        require(domains[name] == msg.sender);
+        if (msg.sender != domains[name]) revert Unauthorized();
         // .labs -> "Best Domain Ever"
         records[name] = record;
     }
@@ -133,5 +146,36 @@ contract Domains is ERC721URIStorage {
     ) public view returns (string memory) {
         console.log("%s", records[name]);
         return records[name];
+    }
+
+    modifier onlyOwner() {
+        require(isOwner());
+        _;
+    }
+
+    function isOwner() public view returns (bool) {
+        return msg.sender == owner;
+    }
+
+    function withdraw() public onlyOwner {
+        uint amount = address(this).balance;
+
+        (bool success, ) = msg.sender.call{value: amount}("");
+        require(success, "Failed to withdraw Matic");
+    }
+
+    function getAllNames() public view returns (string[] memory) {
+        console.log("Getting all names from contract");
+        string[] memory allNames = new string[](_tokenIds.current());
+        for (uint i = 0; i < _tokenIds.current(); i++) {
+            allNames[i] = names[i];
+            console.log("Name for token %d is %s", i, allNames[i]);
+        }
+
+        return allNames;
+    }
+
+    function valid(string calldata name) public pure returns (bool) {
+        return StringUtils.strlen(name) >= 3 && StringUtils.strlen(name) <= 10;
     }
 }
